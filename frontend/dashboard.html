@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College ERP</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; margin: 0; background: #f0f2f5; }
+        .sidebar { width: 250px; background: #2c3e50; color: white; padding: 20px; display: flex; flex-direction: column; }
+        .content { flex: 1; padding: 30px; overflow-y: auto; }
+        .hidden { display: none; }
+        .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input, select, button { padding: 12px; margin: 8px 0; width: 100%; box-sizing: border-box; border-radius: 5px; border: 1px solid #ddd; }
+        button { background: #3498db; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background: #2980b9; transform: translateY(-1px); }
+        .btn-red { background: #e74c3c; }
+        .btn-green { background: #2ecc71; }
+        .tab-btn { width: auto; display: inline-block; margin-right: 10px; background: #7f8c8d; }
+        
+        /* TIMETABLE STYLES */
+        .day-header { background: #2c3e50; color: white; padding: 10px; margin-top: 20px; border-radius: 5px; }
+        .class-row { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; }
+        .class-row:nth-child(even) { background: #f9f9f9; }
+        .time-col { font-weight: bold; color: #555; width: 120px; }
+        .subject-col { flex: 1; color: #2980b9; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2 id="userName">User</h2>
+        <p id="userRole" style="opacity: 0.7; font-size: 0.9em;">ROLE</p>
+        <div style="flex-grow:1"></div>
+        <button class="btn-red" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="content">
+        <h1 style="margin-bottom: 30px;">Dashboard</h1>
+
+        <div id="studentPanel" class="hidden">
+            <div style="margin-bottom: 20px;">
+                <button class="tab-btn" onclick="showStudentSection('viewTimetable')">📅 Timetable</button>
+                <button class="tab-btn" onclick="showStudentSection('viewAttendance')">Attendance</button>
+                <button class="tab-btn" onclick="showStudentSection('viewFees')">Fees</button>
+                <button class="tab-btn" onclick="showStudentSection('viewGrades')">Grades</button>
+            </div>
+
+            <div id="viewTimetable" class="card">
+                <h3>Weekly Timetable</h3>
+                <div id="studentTimetableContainer">Loading...</div>
+            </div>
+
+            <div id="viewAttendance" class="card hidden">
+                <h3>My Attendance History</h3>
+                <div id="attendanceList">Loading...</div>
+            </div>
+
+            <div id="viewFees" class="card hidden">
+                <h3>Fee Status</h3>
+                <p id="feeDetails">Loading...</p>
+            </div>
+
+            <div id="viewGrades" class="card hidden">
+                <h3>My Grades</h3>
+                <ul id="gradeList">Loading...</ul>
+            </div>
+        </div>
+
+        <div id="adminPanel" class="hidden">
+            <div style="margin-bottom: 20px;">
+                <button class="tab-btn" onclick="showAdminSection('markAttendance')">Attendance</button>
+                <button class="tab-btn" onclick="showAdminSection('addStudent')">Students</button>
+                <button class="tab-btn" onclick="showAdminSection('manageFees')">Fees</button>
+                <button class="tab-btn" onclick="showAdminSection('manageGrades')">Grades</button>
+                <button class="tab-btn" onclick="showAdminSection('manageTimetable')">Timetable</button>
+            </div>
+
+            <div id="markAttendance" class="card">
+                <h3>Class Attendance</h3>
+                <div id="studentTableContainer">Loading...</div>
+            </div>
+
+            <div id="addStudent" class="card hidden">
+                <h3>Register New Student</h3>
+                <input type="text" id="newName" placeholder="Full Name">
+                <input type="text" id="newRoll" placeholder="Roll Number (e.g. CS01)">
+                <input type="email" id="newEmail" placeholder="Email">
+                <input type="password" id="newPass" placeholder="Password">
+                <button onclick="registerStudent()" class="btn-green">Register Student</button>
+            </div>
+
+            <div id="manageFees" class="card hidden">
+                <h3>Update Student Fees</h3>
+                <input type="text" id="feeRoll" placeholder="Student Roll Number (e.g. CS01)">
+                <input type="number" id="feeTotal" placeholder="Total Fees (e.g. 50000)">
+                <input type="number" id="feePaid" placeholder="Amount Paid">
+                <input type="number" id="feeScholarship" placeholder="Scholarship Amount (if any)">
+                <button onclick="updateFees()">Update Fees</button>
+            </div>
+
+            <div id="manageGrades" class="card hidden">
+                <h3>Add Student Grades</h3>
+                <input type="text" id="gradeRoll" placeholder="Student Roll Number (e.g. CS01)">
+                <select id="gradeSubject" style="padding:10px; margin:5px 0; width:100%;">
+                    <option value="Web Technology">Web Technology</option>
+                    <option value="Database (DBMS)">Database (DBMS)</option>
+                    <option value="Mathematics">Mathematics</option>
+                    <option value="Java Programming">Java Programming</option>
+                    <option value="Data Structures">Data Structures</option>
+                </select>
+                <div style="display:flex; gap:10px;">
+                    <input type="number" id="gradeMarks" placeholder="Marks Obtained">
+                    <input type="number" id="gradeTotal" placeholder="Total Marks">
+                </div>
+                <button onclick="addGrade()" class="btn-green">Submit Grade</button>
+            </div>
+
+            <div id="manageTimetable" class="card hidden">
+                <h3>Manage Timetable</h3>
+                <div style="background:#f1f1f1; padding:15px; border-radius:8px; margin-bottom:20px;">
+                    <select id="ttDay">
+                        <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+                        <option>Thursday</option><option>Friday</option><option>Saturday</option>
+                    </select>
+                    <input type="text" id="ttSubject" placeholder="Subject Name">
+                    <div style="display:flex; gap:10px;">
+                        <input type="time" id="ttStart">
+                        <input type="time" id="ttEnd">
+                    </div>
+                    <button class="btn-green" onclick="addClass()">Add to Schedule</button>
+                </div>
+                <div id="adminTimetableContainer">Loading Schedule...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const user = JSON.parse(localStorage.getItem('user'));
+        let studentInfo = JSON.parse(localStorage.getItem('student'));
+
+        if (!user) window.location.href = 'index.html';
+        document.getElementById('userRole').innerText = user.role.toUpperCase();
+
+        if (user.role === 'admin') {
+            document.getElementById('adminPanel').classList.remove('hidden');
+            document.getElementById('userName').innerText = "Administrator";
+            loadTimetable('adminTimetableContainer');
+            loadAllStudents();
+        } else {
+            document.getElementById('studentPanel').classList.remove('hidden');
+            checkAndLoadStudent();
+        }
+
+        function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+
+        async function loadTimetable(containerId) {
+            try {
+                const res = await fetch('http://localhost:3000/timetable');
+                const data = await res.json();
+                const container = document.getElementById(containerId);
+                container.innerHTML = "";
+
+                if(data.length === 0) {
+                    container.innerHTML = "<p>No classes scheduled.</p>";
+                    return;
+                }
+
+                const grouped = {};
+                data.forEach(item => {
+                    if(!grouped[item.day]) grouped[item.day] = [];
+                    grouped[item.day].push(item);
+                });
+
+                for (const day in grouped) {
+                    let dayHtml = `<div class='day-header'>${day}</div>`;
+                    grouped[day].forEach(cls => {
+                        dayHtml += `
+                            <div class='class-row'>
+                                <div class='time-col'>${cls.start_time.slice(0,5)} - ${cls.end_time.slice(0,5)}</div>
+                                <div class='subject-col'>${cls.subject}</div>
+                            </div>`;
+                    });
+                    container.innerHTML += dayHtml;
+                }
+            } catch (err) { console.error("Timetable Error:", err); }
+        }
+
+        async function addClass() {
+            const body = {
+                day: document.getElementById('ttDay').value,
+                subject: document.getElementById('ttSubject').value,
+                start_time: document.getElementById('ttStart').value,
+                end_time: document.getElementById('ttEnd').value
+            };
+            await fetch('http://localhost:3000/timetable', {
+                method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)
+            });
+            alert("Class Added!");
+            loadTimetable('adminTimetableContainer');
+        }
+
+        function showAdminSection(id) {
+            ['manageTimetable', 'markAttendance', 'addStudent', 'manageFees', 'manageGrades'].forEach(sec => 
+                document.getElementById(sec).classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        async function loadAllStudents() {
+            try {
+                const res = await fetch('http://localhost:3000/students');
+                const students = await res.json();
+                document.getElementById('studentTableContainer').innerHTML = students.map(s => 
+                    `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee;">
+                        <span>${s.name} (${s.roll_number})</span>
+                        <div>
+                            <button class="btn-green" style="padding:5px 10px" onclick="markAttendance(${s.student_id}, 'Present')">P</button>
+                            <button class="btn-red" style="padding:5px 10px" onclick="markAttendance(${s.student_id}, 'Absent')">A</button>
+                        </div>
+                    </div>`
+                ).join('');
+            } catch (err) { console.error("Student List Error:", err); }
+        }
+
+        async function markAttendance(student_id, status) {
+            await fetch('http://localhost:3000/attendance', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student_id, status })
+            });
+            alert("Attendance Marked!");
+        }
+
+        async function registerStudent() {
+            const name = document.getElementById('newName').value;
+            const roll = document.getElementById('newRoll').value;
+            const email = document.getElementById('newEmail').value;
+            const pass = document.getElementById('newPass').value;
+            await fetch('http://localhost:3000/register', {
+                method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({name, email, password: pass, roll_number: roll})
+            });
+            alert("Student Registered!");
+            loadAllStudents();
+        }
+
+        async function updateFees() {
+            const body = {
+                roll_number: document.getElementById('feeRoll').value,
+                total: document.getElementById('feeTotal').value,
+                paid: document.getElementById('feePaid').value,
+                scholarship: document.getElementById('feeScholarship').value || 0
+            };
+            const res = await fetch('http://localhost:3000/fees', {
+                method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            alert(data.message || "Done");
+        }
+
+        async function addGrade() {
+            const body = {
+                roll_number: document.getElementById('gradeRoll').value,
+                subject: document.getElementById('gradeSubject').value,
+                marks: document.getElementById('gradeMarks').value,
+                total: document.getElementById('gradeTotal').value
+            };
+            const res = await fetch('http://localhost:3000/grades', {
+                method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            alert(data.message || "Done");
+        }
+
+        async function checkAndLoadStudent() {
+            if (!studentInfo) {
+                const res = await fetch(`http://localhost:3000/student/${user.user_id}`);
+                studentInfo = await res.json();
+                localStorage.setItem('student', JSON.stringify(studentInfo));
+            }
+            document.getElementById('userName').innerText = studentInfo.name;
+            loadStudentData();
+            loadTimetable('studentTimetableContainer');
+        }
+
+        function showStudentSection(id) {
+            ['viewTimetable', 'viewAttendance', 'viewFees', 'viewGrades'].forEach(sec => 
+                document.getElementById(sec).classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        async function loadStudentData() {
+            const id = studentInfo.student_id;
+            
+            const attRes = await fetch(`http://localhost:3000/attendance/${id}`);
+            const attData = await attRes.json();
+            document.getElementById('attendanceList').innerHTML = attData.map(a => `<p>${a.date}: <b>${a.status}</b></p>`).join('');
+            
+            const feeRes = await fetch(`http://localhost:3000/fees/${id}`);
+            const feeData = await feeRes.json();
+            const feeElement = document.getElementById('feeDetails');
+
+            if(feeData.message) {
+                feeElement.innerHTML = `<span style="color: grey;">${feeData.message}</span>`;
+            } else {
+                feeElement.innerHTML = `
+                    Total: ₹${feeData.total_fees} <br>
+                    Paid: ₹${feeData.paid_amount} <br>
+                    Pending: <b style="color:red">₹${feeData.pending_amount}</b>`;
+            }
+
+            const gradeRes = await fetch(`http://localhost:3000/grades/${id}`);
+            const gradeData = await gradeRes.json();
+            document.getElementById('gradeList').innerHTML = gradeData.map(g => 
+                `<li>${g.subject}: <b>${g.marks_obtained}/${g.total_marks}</b></li>`).join('');
+        }
+    </script>
+</body>
+</html>
